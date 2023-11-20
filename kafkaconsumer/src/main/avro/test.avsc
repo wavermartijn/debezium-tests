@@ -1,0 +1,10 @@
+{
+   "type" : "record",
+   "namespace" : "com.example.avro",
+   "name" : "Test",
+
+   "fields" : [
+      { "name" : "Name" , "type" : "string" },
+      { "name" : "Age" , "type" : "int" }
+   ]
+}

@@ -1,0 +1,82 @@
+version: '3'
+services:
+  zookeeper:
+    image: quay.io/debezium/zookeeper:${DEBEZIUM_VERSION}
+    ports:
+     - 2181:2181
+     - 2888:2888
+     - 3888:3888
+  kafka:
+    image: quay.io/debezium/kafka:${DEBEZIUM_VERSION}
+    ports:
+     - 29092:29092
+    links:
+     - zookeeper
+    environment:
+     - ZOOKEEPER_CONNECT=zookeeper:2181
+     - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29094,PLAINTEXT_HOST://localhost:29092
+     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+     - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:29094,PLAINTEXT_HOST://0.0.0.0:29092
+
+  karapace-registry:
+    image: ghcr.io/aiven/karapace:latest
+    ports:
+         - 8081:8081
+    environment:
+        KARAPACE_ADVERTISED_HOSTNAME: karapace-registry
+        KARAPACE_BOOTSTRAP_URI: kafka:29094
+        KARAPACE_PORT: 8081
+        KARAPACE_HOST: 0.0.0.0
+        KARAPACE_CLIENT_ID: karapace
+        KARAPACE_GROUP_ID: karapace-registry
+        KARAPACE_MASTER_ELIGIBILITY: "true"
+        KARAPACE_TOPIC_NAME: _schemas
+        KARAPACE_LOG_LEVEL: WARNING
+        KARAPACE_COMPATIBILITY: FULL
+    entrypoint:
+      - /bin/bash
+      - /opt/karapace/start.sh
+      - registry
+    depends_on:
+      - kafka
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8080:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: test
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29094
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://karapace-registry:8081
+      KAFKA_CLUSTERS_0_CONNECT_NAME: "kafka-connect"
+      KAFKA_CLUSTERS_0_CONNECT_0_ADDRESS: http://connect:8083
+
+#    volumes:
+#      - ~/kui/config.yml:/etc/kafkaui/dynamic_config.yaml
+    depends_on:
+      - kafka
+      - karapace-registry
+
+
+  mysql:
+    image: quay.io/debezium/example-mysql:${DEBEZIUM_VERSION}
+    ports:
+     - 3306:3306
+    environment:
+     - MYSQL_ROOT_PASSWORD=debezium
+     - MYSQL_USER=mysqluser
+     - MYSQL_PASSWORD=mysqlpw
+  connect:
+    image: quay.io/debezium/connect:${DEBEZIUM_VERSION}
+    ports:
+     - 8083:8083
+    links:
+     - kafka
+     - mysql
+    environment:
+     - BOOTSTRAP_SERVERS=kafka:29094
+     - GROUP_ID=1
+     - CONFIG_STORAGE_TOPIC=my_connect_configs
+     - OFFSET_STORAGE_TOPIC=my_connect_offsets
+     - STATUS_STORAGE_TOPIC=my_connect_statuses
