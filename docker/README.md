@@ -8,7 +8,7 @@ curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json"
 
 # Consume messages from a Debezium topic
 docker-compose -f docker-compose-mysql-karapace.yaml exec kafka /kafka/bin/kafka-console-consumer.sh \
-    --bootstrap-server kafka:9092 \
+    --bootstrap-server kafka:29094 \
     --from-beginning \
     --property print.key=true \
     --topic dbserver1.inventory.customers
