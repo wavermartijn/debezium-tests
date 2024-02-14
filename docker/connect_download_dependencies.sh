@@ -26,6 +26,7 @@ download_jar() {
         echo -e "\e[91mERROR: Failed to download $path \e[0m"
     fi
 }
+cd /kafka/libs
 
 # Download JAR files using the function
 download_jar "maven" "/org/apache/avro/avro/$APACHE_AVRO_VERSION/avro-$APACHE_AVRO_VERSION.jar"

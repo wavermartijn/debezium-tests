@@ -3,8 +3,11 @@
 export DEBEZIUM_VERSION=2.1
 docker-compose -f docker-compose-mysql-karapace.yaml up
 
-# Start MySQL connector
+# Start MySQL connector with json data
 curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-mysql.json
+
+# Start MySQL connector with avro servialization data
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-mysql-avro.json
 
 # Consume messages from a Debezium topic
 docker-compose -f docker-compose-mysql-karapace.yaml exec kafka /kafka/bin/kafka-console-consumer.sh \
